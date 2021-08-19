@@ -6,6 +6,7 @@ import time
 import threading
 import os
 import shlex
+from fuzzywuzzy import process
 
 from kinds import kinds
 
@@ -534,7 +535,19 @@ def getCurrentCompletions(base):
   timer.registerEvent("Count # Results (%s)" % str(len(results)))
 
   if base != "":
-    results = [x for x in results if getAbbr(x.string).startswith(base)]
+    results_prefix = [x for x in results if getAbbr(x.string).startswith(base)]
+    if len(results_prefix)==0:
+      candidates={}
+      for i in range(len(results)):
+        candidates[getAbbr(results[i].string)] =i
+      keys=candidates.keys()
+      fuzzy_res=process.extract(base,keys,limit=10)
+      tmp_results=[]
+      for i in fuzzy_res:
+        tmp_results.append(results[candidates[i[0]]])
+      results=tmp_results
+    else:
+      results=results_prefix
 
   timer.registerEvent("Filter")
 
